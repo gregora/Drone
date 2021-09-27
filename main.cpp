@@ -2,18 +2,28 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-
+#include <random>
 
 using namespace std;
 
-int WIDTH = 800;
-int HEIGHT = 400;
+int WIDTH = 1900;
+int HEIGHT = 1200;
 
 bool ENABLE_AUTO = true;
 
 float sigmoid(float x){
 	float exp = pow(2.71, x);
 	return exp / (1 + exp);
+}
+
+float randFloat() {
+
+	std::random_device rd{};
+	std::mt19937 engine{rd()};
+	std::uniform_real_distribution<double> dist{0.0, 1.0};
+	double ret = dist(engine);
+	return ret;
+
 }
 
 //run engines to achieve desired angle
@@ -34,10 +44,12 @@ void angle_controller(float angle, float target_angle, float angular_velocity, f
 //run engines to achieve desired position (x - axis)
 void position_controller(float x, float target_x, float speedx, float * target_angle){
 
+	double max_angle = 0.3;
+
 	float move_coef = 0.5;
 	float desired_speed = (x-target_x)*move_coef;
 
-	float target_angle_magnitude = min(0.1*abs(desired_speed - speedx), 0.3);
+	float target_angle_magnitude = min(0.1*abs(desired_speed - speedx), max_angle);
 
 	if(-speedx > desired_speed){
 		*target_angle = target_angle_magnitude;
@@ -69,8 +81,6 @@ void controller(float x, float y, float speedx, float speedy, float angle, float
 	if(ar == 1)
 		*right += 0.3;
 
-
-
 }
 
 
@@ -96,8 +106,13 @@ class Drone : public sf::Drawable{
 
 
 		Drone() {
-			square.setSize(sf::Vector2f(30, 10));
-			square.setOrigin(15, 5);
+			texture.loadFromFile("img/drone.png");
+
+			float scale = 0.1;
+
+			sprite.setTexture(texture);
+			sprite.setScale(scale, scale);
+			sprite.setOrigin(texture.getSize().x / 2, texture.getSize().y / 2);
 
 		}
 
@@ -121,8 +136,8 @@ class Drone : public sf::Drawable{
 			x += speedx*delta;
 			y += speedy*delta;
 
-			square.setPosition(x*10 + WIDTH / 2, - y*10 + HEIGHT / 2);
-			square.setRotation(angle * 180 / 3.14);
+			sprite.setPosition(x*10 + WIDTH / 2, - y*10 + HEIGHT / 2);
+			sprite.setRotation(angle * 180 / 3.14);
 
 		}
 
@@ -149,11 +164,12 @@ class Drone : public sf::Drawable{
 
 	    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
-	        target.draw(square);
+	        target.draw(sprite);
 	    }
 
 	private:
-		sf::RectangleShape square;
+		sf::Sprite sprite;
+		sf::Texture texture;
 
 		float left_power = 0;
 		float right_power = 0;
@@ -161,6 +177,15 @@ class Drone : public sf::Drawable{
 
 
 int main(){
+
+	sf::RectangleShape background;
+	background.setFillColor(sf::Color(0, 200, 255));
+	background.setSize(sf::Vector2f(WIDTH, HEIGHT));
+
+	sf::CircleShape target(10);
+	target.setOrigin(10, 10);
+	target.setFillColor(sf::Color(255, 0, 0));
+	target.setPosition(WIDTH / 2, HEIGHT / 2);
 
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 8;
@@ -172,6 +197,8 @@ int main(){
 	sf::Clock clock;
 
 	Drone drone;
+	//drone.x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
+	//drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
 
 	float left = 0;
 	float right = 0;
@@ -230,6 +257,8 @@ int main(){
 		drone.physics(delta);
 
 		window.clear();
+		window.draw(background);
+		window.draw(target);
 		window.draw(drone);
         window.display();
     }
