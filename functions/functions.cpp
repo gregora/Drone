@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 //run engines to achieve desired angle
 void angle_controller(float angle, float target_angle, float angular_velocity, float * left, float * right){
 
@@ -39,8 +38,14 @@ void position_controller(float x, float target_x, float speedx, float * target_a
 //run engines to achieve desired position
 void controller(float x, float y, float speedx, float speedy, float angle, float angular_velocity, float * left, float * right){
 
+
 	*left = 0;
 	*right = 0;
+
+	if(-speedy > y){
+		*left = 0.2;
+		*right = 0.2;
+	}
 
 	float target_angle = 0;
 	position_controller(x, 0, speedx, &target_angle);
@@ -48,16 +53,8 @@ void controller(float x, float y, float speedx, float speedy, float angle, float
 	float al, ar;
 	angle_controller(angle, target_angle, angular_velocity, &al, &ar);
 	if(al == 1)
-		*left = 0.3;
+		*left += 0.3;
 	if(ar == 1)
-		*right = 0.3;
-
-
-	//calculate desired engine power
-	if(-speedy > y){
-		*left += 0.2;
-		*right += 0.2;
-	}
-
+		*right += 0.3;
 
 }

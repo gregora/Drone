@@ -74,7 +74,7 @@ class Drone : public sf::Drawable{
 			speedx += force*sin(angle) / mass * delta;
 			speedy += force*cos(angle) / mass * delta;
 
-			angular_velocity += (left_power - right_power)*engine_pow*engine_dist/inertia*delta;
+			angular_velocity += (left_power - right_power)*engine_pow*engine_dist/inertia*delta; //calculate angular acceleration
 
 			//apply physics
 			angle += angular_velocity*delta;
