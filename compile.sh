@@ -1,1 +1,1 @@
-g++ main.cpp -o main.out -lsfml-graphics -lsfml-window -lsfml-system && ./main.out
+g++ main.cpp -o main.out functions/functions.cpp -lsfml-graphics -lsfml-window -lsfml-system && ./main.out

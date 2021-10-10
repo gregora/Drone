@@ -1,8 +1,9 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
-#include <math.h>
 #include <random>
+#include <math.h>
+#include "functions/functions.h"
 
 using namespace std;
 
@@ -26,64 +27,6 @@ float randFloat() {
 
 }
 
-//run engines to achieve desired angle
-void angle_controller(float angle, float target_angle, float angular_velocity, float * left, float * right){
-
-	float turn_coef = 5;
-
-	*left = 0;
-	*right = 0;
-
-	if(-angular_velocity > (angle - target_angle) * turn_coef){
-		*left = 1;
-	}else{
-		*right = 1;
-	}
-}
-
-//run engines to achieve desired position (x - axis)
-void position_controller(float x, float target_x, float speedx, float * target_angle){
-
-	double max_angle = 0.3;
-
-	float move_coef = 0.5;
-	float desired_speed = (x-target_x)*move_coef;
-
-	float target_angle_magnitude = min(0.1*abs(desired_speed - speedx), max_angle);
-
-	if(-speedx > desired_speed){
-		*target_angle = target_angle_magnitude;
-	}else{
-		*target_angle = -target_angle_magnitude;
-	}
-
-}
-
-//run engines to achieve desired position
-void controller(float x, float y, float speedx, float speedy, float angle, float angular_velocity, float * left, float * right){
-
-
-	*left = 0;
-	*right = 0;
-
-	if(-speedy > y){
-		*left = 0.2;
-		*right = 0.2;
-	}
-
-	float target_angle = 0;
-	position_controller(x, 0, speedx, &target_angle);
-
-	float al, ar;
-	angle_controller(angle, target_angle, angular_velocity, &al, &ar);
-	if(al == 1)
-		*left += 0.3;
-	if(ar == 1)
-		*right += 0.3;
-
-}
-
-
 
 class Drone : public sf::Drawable{
 
@@ -105,14 +48,18 @@ class Drone : public sf::Drawable{
 		void (*controller)(float x, float y, float speedx, float speedy, float angle, float angular_velocity, float * left, float * right) = nullptr;
 
 
-		Drone() {
-			texture.loadFromFile("img/drone.png");
+		Drone(char * path = "img/drone.png") {
+			texture.loadFromFile(path);
 
 			float scale = 0.1;
 
 			sprite.setTexture(texture);
 			sprite.setScale(scale, scale);
 			sprite.setOrigin(texture.getSize().x / 2, texture.getSize().y / 2);
+
+			square.setSize(sf::Vector2f(100, 100));
+			square.setScale(scale, scale);
+			square.setOrigin(100 / 2, 100 / 2);
 
 		}
 
@@ -135,6 +82,9 @@ class Drone : public sf::Drawable{
 
 			x += speedx*delta;
 			y += speedy*delta;
+
+			square.setPosition(x*10 + WIDTH / 2, - y*10 + HEIGHT / 2);
+			square.setRotation(angle * 180 / 3.14);
 
 			sprite.setPosition(x*10 + WIDTH / 2, - y*10 + HEIGHT / 2);
 			sprite.setRotation(angle * 180 / 3.14);
@@ -161,15 +111,21 @@ class Drone : public sf::Drawable{
 			std::cout << "x: " << x << ", y:" << y << std::endl;
 		}
 
+		void setColor(int red, int green, int blue){
+			square.setFillColor(sf::Color(red, green, blue));
+		}
+
 
 	    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
 	        target.draw(sprite);
+			target.draw(square);
 	    }
 
 	private:
 		sf::Sprite sprite;
 		sf::Texture texture;
+		sf::RectangleShape square;
 
 		float left_power = 0;
 		float right_power = 0;
@@ -197,6 +153,7 @@ int main(){
 	sf::Clock clock;
 
 	Drone drone;
+	drone.setColor(120, 120, 120);
 	//drone.x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
 	//drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
 
