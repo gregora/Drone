@@ -4,6 +4,7 @@
 #include <random>
 #include <math.h>
 #include "functions/functions.h"
+#include "string.h"
 
 using namespace std;
 
@@ -41,7 +42,7 @@ class Drone : public sf::Drawable{
 		float angular_velocity = 0;
 
 		float inertia = 0.1;
-		float mass = 0.1;
+		float mass = 0.3;
 		float engine_dist = 0.2;
 		float engine_pow = 3;
 
@@ -63,11 +64,15 @@ class Drone : public sf::Drawable{
 
 		}
 
-		void physics(float delta){
+		void physics(float delta, bool debug = false){
+
 
 			//call controller
-			if(controller != nullptr)
-				controller(x, y, speedx, speedy, angle, angular_velocity, &left_power, &right_power);
+			if(controller != nullptr){
+				float cl, cr;
+				controller(x, y, speedx, speedy, angle, angular_velocity, &cl, &cr);
+				setPower(cl, cr);
+			}
 
 			//apply engine power
 			float force = (left_power + right_power)*engine_pow;
@@ -89,6 +94,9 @@ class Drone : public sf::Drawable{
 			sprite.setPosition(x*10 + WIDTH / 2, - y*10 + HEIGHT / 2);
 			sprite.setRotation(angle * 180 / 3.14);
 
+			if(debug){
+				std::cout << "x: " << x << ", y:" << y << ", left_ep: " << left_power << ", right_ep: " << right_power << std::endl;
+			}
 		}
 
 		void setPower(float left, float right){
@@ -107,20 +115,16 @@ class Drone : public sf::Drawable{
 			right_power = right;
 		}
 
-		void debug(){
-			std::cout << "x: " << x << ", y:" << y << std::endl;
-		}
-
 		void setColor(int red, int green, int blue){
 			square.setFillColor(sf::Color(red, green, blue));
 		}
 
 
-	    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const {
+		virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
-	        target.draw(sprite);
+			target.draw(sprite);
 			target.draw(square);
-	    }
+		}
 
 	private:
 		sf::Sprite sprite;
@@ -132,7 +136,19 @@ class Drone : public sf::Drawable{
 };
 
 
-int main(){
+int main(int argc, char* argv[]){
+
+	bool record = false;
+	bool noscreen = false;
+
+	for(int i = 0; i < argc; i++){
+		if(strcmp(argv[i], "-record") == 0){
+			cout << argv[i] << endl;
+			record = true;
+		}else if(strcmp(argv[i], "-noscreen") == 0){
+			noscreen = true;
+		}
+	}
 
 	sf::RectangleShape background;
 	background.setFillColor(sf::Color(0, 200, 255));
@@ -148,31 +164,51 @@ int main(){
 
 
 	sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "SFML", sf::Style::Default, settings);
+	sf::RenderTexture* renderTexture = new sf::RenderTexture();
+	renderTexture->create(WIDTH, HEIGHT);
 
 	float time_elapsed = 0;
 	sf::Clock clock;
 
 	Drone drone;
 	drone.setColor(120, 120, 120);
-	//drone.x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
-	//drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
+	drone.x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
+	drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
+
+
+	int DRONE_NUMBER = 1000;
+	Drone drones[DRONE_NUMBER];
+
+	for(int i = 0; i < DRONE_NUMBER; i++){
+		Drone * d = new Drone();
+		d -> setColor(i*307 %  255, i*353 % 255, i*397  % 255);
+		d -> x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
+		d -> y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
+		d -> controller = controller;
+
+		drones[i] = *d;
+	}
+
 
 	float left = 0;
 	float right = 0;
 	int mode = 0;
+	int frame = 0;
 
-    while (window.isOpen())
-    {
+	while (window.isOpen())
+	{
 		sf::Time dt = clock.restart();
-		float delta = dt.asSeconds();
+		//float delta = dt.asSeconds();
+		float delta = 0.0166;
 		time_elapsed += delta;
+		frame++;
 
 
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+				window.close();
 			else if(event.type == sf::Event::KeyPressed){
 
 				if(event.key.code == sf::Keyboard::Left){
@@ -195,7 +231,7 @@ int main(){
 
 			}
 
-        }
+		}
 
 		if(delta == 0){
 			delta = 0.1;
@@ -211,14 +247,32 @@ int main(){
 			}
 		}
 
+		renderTexture -> clear();
+		renderTexture -> draw(background);
+		renderTexture -> draw(target);
+
+		renderTexture -> draw(drone);
 		drone.physics(delta);
 
-		window.clear();
-		window.draw(background);
-		window.draw(target);
-		window.draw(drone);
-        window.display();
-    }
+		for(int i = 0; i < DRONE_NUMBER; i++){
+			drones[i].physics(delta);
+			renderTexture -> draw(drones[i]);
+		}
 
-    return 0;
+		renderTexture -> display();
+
+		sf::Texture screen_texture = renderTexture -> getTexture();
+
+
+		if(record){
+			renderTexture -> getTexture().copyToImage().saveToFile("frames/" + to_string(frame) + ".png");
+			cout << "Frame " + to_string(frame) + " rendered!" << endl;
+		}
+
+		window.clear();
+		window.draw(sf::Sprite(renderTexture -> getTexture()));
+		window.display();
+	}
+
+	return 0;
 }

@@ -42,19 +42,27 @@ void controller(float x, float y, float speedx, float speedy, float angle, float
 	*left = 0;
 	*right = 0;
 
-	if(-speedy > y){
-		*left = 0.2;
-		*right = 0.2;
-	}
-
 	float target_angle = 0;
 	position_controller(x, 0, speedx, &target_angle);
 
 	float al, ar;
 	angle_controller(angle, target_angle, angular_velocity, &al, &ar);
-	if(al == 1)
+	if(al == 1){
 		*left += 0.3;
-	if(ar == 1)
+		*right -= 0.3;
+	}
+
+	if(ar == 1){
 		*right += 0.3;
+		*left -= 0.3;
+	}
+
+	float sum_power = (*left + *right)*cos(angle);
+
+	if(-speedy > y){
+		*left += 0.8;
+		*right += 0.8;
+
+	}
 
 }
