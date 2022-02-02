@@ -139,8 +139,16 @@ class Drone : public sf::Drawable{
 
 int main(int argc, char* argv[]){
 
+	sf::Text text;
+	sf::Font font;
+	font.loadFromFile("/usr/share/fonts/truetype/freefont/FreeSerif.ttf");
+	text.setFont(font);
+	text.setColor(sf::Color(0, 0, 0));
+	text.move(WIDTH - 100, 10);
+
 	bool record = false;
 	bool noscreen = false;
+	bool show_fps = false;
 
 	for(int i = 0; i < argc; i++){
 		if(strcmp(argv[i], "-record") == 0){
@@ -148,6 +156,8 @@ int main(int argc, char* argv[]){
 			record = true;
 		}else if(strcmp(argv[i], "-noscreen") == 0){
 			noscreen = true;
+		}else if(strcmp(argv[i], "-fps") == 0){
+			show_fps = true;
 		}
 	}
 
@@ -177,7 +187,7 @@ int main(int argc, char* argv[]){
 	drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
 
 
-	int DRONE_NUMBER = 1;
+	int DRONE_NUMBER = 1000;
 	Drone drones[DRONE_NUMBER];
 
 	for(int i = 0; i < DRONE_NUMBER; i++){
@@ -191,13 +201,6 @@ int main(int argc, char* argv[]){
 	}
 
 
-
-	drone.x = -60;
-	drone.y = -50;
-	drones[0].x = -60;
-	drones[0].y = -50;
-
-
 	float left = 0;
 	float right = 0;
 	int mode = 0;
@@ -206,8 +209,13 @@ int main(int argc, char* argv[]){
 	while (window.isOpen())
 	{
 		sf::Time dt = clock.restart();
-		//float delta = dt.asSeconds();
-		float delta = 0.0166;
+		float delta = dt.asSeconds();
+		if(record){
+			delta = 0.0166;
+		}
+		if(frame == 0){
+			delta = 0.0166;
+		}
 		time_elapsed += delta;
 		frame++;
 
@@ -249,7 +257,7 @@ int main(int argc, char* argv[]){
 
 		if(ENABLE_AUTO){
 			if(mode == 0){
-				drone.controller = &controller;
+				drone.controller = &controller2;
 			}else{
 				drone.controller = nullptr;
 			}
@@ -267,10 +275,16 @@ int main(int argc, char* argv[]){
 			renderTexture -> draw(drones[i]);
 		}
 
+		if(show_fps){
+			if(frame % 20 == 1){
+				// set the string to display
+				text.setString(to_string((int) (1 / delta)) + " FPS");
+			}
+			renderTexture -> draw(text);
+		}
+
 		renderTexture -> display();
-
 		sf::Texture screen_texture = renderTexture -> getTexture();
-
 
 		if(record){
 			renderTexture -> getTexture().copyToImage().saveToFile("frames/" + to_string(frame) + ".png");
