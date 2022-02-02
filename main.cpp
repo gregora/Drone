@@ -3,8 +3,9 @@
 #include <vector>
 #include <random>
 #include <math.h>
+#include <string.h>
+
 #include "functions/functions.h"
-#include "string.h"
 
 using namespace std;
 
@@ -176,7 +177,7 @@ int main(int argc, char* argv[]){
 	drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
 
 
-	int DRONE_NUMBER = 1000;
+	int DRONE_NUMBER = 1;
 	Drone drones[DRONE_NUMBER];
 
 	for(int i = 0; i < DRONE_NUMBER; i++){
@@ -184,10 +185,17 @@ int main(int argc, char* argv[]){
 		d -> setColor(i*307 %  255, i*353 % 255, i*397  % 255);
 		d -> x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
 		d -> y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
-		d -> controller = controller;
+		d -> controller = &controller2;
 
 		drones[i] = *d;
 	}
+
+
+
+	drone.x = -60;
+	drone.y = -50;
+	drones[0].x = -60;
+	drones[0].y = -50;
 
 
 	float left = 0;

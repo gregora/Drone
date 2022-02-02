@@ -1,4 +1,5 @@
 #include "functions.h"
+#include "stdio.h"
 
 using namespace std;
 
@@ -64,5 +65,84 @@ void controller(float x, float y, float speedx, float speedy, float angle, float
 		*right += 0.8;
 
 	}
+
+}
+
+
+float sign(float x){
+	return -(-(x > 0) + 0.5)*2;
+}
+
+float pow(float x, int n){
+	float ret = 1;
+	for(int i = 0; i < n; i++){
+		ret*=x;
+	}
+	return ret;
+}
+
+void controller2(float x, float y, float speedx, float speedy, float angle, float angular_velocity, float * left, float * right){
+
+	//constant for converting deg to rad
+	float deg2rad = 3.14/180;
+
+	//calculate desired vertical power
+	float dp_vertical;
+	if(-speedy > min(max(y, -10.0f), 10.0f)){
+		dp_vertical = 0.8;
+	}else{
+		dp_vertical = 0;
+	}
+
+	float vertical_dp = max(dp_vertical / cos(angle), 1.0f);
+
+
+	//calculate desired angle
+	float dp_horizontal_l, dp_horizontal_r;
+
+	float break_bias_a = 0.65;
+	float break_bias_b = 2;
+	float break_space = abs(speedx*speedx)/(6*cos(20*deg2rad)) + break_bias_a*abs(speedx) + break_bias_b;
+
+	float desired_angle;
+	if(x >= 3){
+		if(speedx >= 0){
+			desired_angle = -20*deg2rad;
+		}else{
+			if(break_space > x){
+				desired_angle = 20*deg2rad;
+			}else{
+				desired_angle = -20*deg2rad;
+			}
+		}
+	}else if(x <= - 3){
+		if(speedx <= 0){
+			desired_angle = 20*deg2rad;
+		}else{
+			if(break_space > abs(x)){
+				desired_angle = -20*deg2rad;
+			}else{
+				desired_angle = 20*deg2rad;
+			}
+		}
+	}else {
+		desired_angle = max(min(-(x + speedx)*0.1f, 20.0f*deg2rad), -20.0f*deg2rad);
+	}
+
+	//get engine powers from desired angle
+	angle_controller(angle, desired_angle, angular_velocity, &dp_horizontal_l, &dp_horizontal_r);
+	dp_horizontal_l /= 2;
+	dp_horizontal_r /= 2;
+
+	//calculate actual engine powers from desired horizontal and vertical powers
+	float max_bias = min(1.0f - dp_horizontal_l, 1.0f - dp_horizontal_r);
+	float min_bias = - min(dp_horizontal_l, dp_horizontal_r);
+
+	float c_vertical = (dp_horizontal_l + dp_horizontal_r) / 2;
+	float bias = min(max(dp_vertical - c_vertical, min_bias), max_bias);
+
+	//apply power
+	*left = dp_horizontal_l + bias;
+	*right = dp_horizontal_r + bias;
 
 }
