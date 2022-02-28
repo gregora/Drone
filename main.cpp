@@ -73,16 +73,10 @@ int main(int argc, char* argv[]){
 	float time_elapsed = 0;
 	sf::Clock clock;
 
-	Drone drone;
-	drone.setColor(120, 120, 120);
-	drone.setScale(10, 10);
-	drone.x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
-	drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
 
 
 	int DRONE_NUMBER = 5;
 	Drone drones[DRONE_NUMBER];
-
 	for(int i = 0; i < DRONE_NUMBER; i++){
 		Drone * d = new Drone();
 		d -> setScale(10, 10);
@@ -147,24 +141,19 @@ int main(int argc, char* argv[]){
 			delta = 0.1;
 		}
 
-		drone.setPower(left, right);
+		drones[0].setPower(left, right);
 
 		if(ENABLE_AUTO){
 			if(mode == 0){
-				drone.controller = &controller2;
+				drones[0].controller = &controller2;
 			}else{
-				drone.controller = nullptr;
+				drones[0].controller = nullptr;
 			}
 		}
 
 		renderTexture -> clear();
 		renderTexture -> draw(background);
 		renderTexture -> draw(target);
-
-		drone.physics(delta, false);
-		drone.setPosition(WIDTH/2 + drone.x*10, HEIGHT/2 - drone.y*10);
-		drone.setRotation(drone.angle * 180/3.14);
-		renderTexture -> draw(drone);
 
 		for(int i = 0; i < DRONE_NUMBER; i++){
 			drones[i].physics(delta);
