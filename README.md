@@ -2,6 +2,8 @@
 
 A virtual environment for testing drone control functions.
 
+Showcase: [https://youtu.be/FPFRh0Pat6M](https://youtu.be/FPFRh0Pat6M)
+
 ## Dependencies
 
 * [SFML library](https://www.sfml-dev.org/) - `sudo apt-get install libsfml-dev`
