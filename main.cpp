@@ -1,5 +1,3 @@
-#include <SFML/Graphics.hpp>
-#include <iostream>
 #include <vector>
 #include <random>
 #include <math.h>
@@ -14,6 +12,9 @@ int WIDTH = 1900;
 int HEIGHT = 1200;
 
 bool ENABLE_AUTO = true;
+
+float SCALE = 1; //texture scale
+float PPM = 10; //pixels per meter
 
 float sigmoid(float x){
 	float exp = pow(2.71, x);
@@ -58,7 +59,7 @@ int main(int argc, char* argv[]){
 	background.setSize(sf::Vector2f(WIDTH, HEIGHT));
 
 	sf::CircleShape target(10);
-	target.setOrigin(10, 10);
+	target.setOrigin(10*SCALE, 10*SCALE);
 	target.setFillColor(sf::Color(255, 0, 0));
 	target.setPosition(WIDTH / 2, HEIGHT / 2);
 
@@ -75,14 +76,14 @@ int main(int argc, char* argv[]){
 
 
 
-	int DRONE_NUMBER = 5;
+	int DRONE_NUMBER = 500;
 	Drone drones[DRONE_NUMBER];
 	for(int i = 0; i < DRONE_NUMBER; i++){
 		Drone * d = new Drone();
-		d -> setScale(10, 10);
+		d -> setScale(SCALE, SCALE);
 		d -> setColor(i*307 %  255, i*353 % 255, i*397  % 255);
-		d -> x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
-		d -> y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
+		d -> x = (float) WIDTH * randFloat() / (SCALE*PPM) - WIDTH / (2*SCALE*PPM);
+		d -> y = (float) HEIGHT * randFloat() / (SCALE*PPM) - HEIGHT / (2*SCALE*PPM);
 		d -> controller = &controller2;
 
 		drones[i] = *d;
@@ -157,7 +158,7 @@ int main(int argc, char* argv[]){
 
 		for(int i = 0; i < DRONE_NUMBER; i++){
 			drones[i].physics(delta);
-			drones[i].setPosition(WIDTH/2 + drones[i].x*10, HEIGHT/2 - drones[i].y*10);
+			drones[i].setPosition(WIDTH/2 + drones[i].x*SCALE*PPM, HEIGHT/2 - drones[i].y*SCALE*PPM);
 			drones[i].setRotation(drones[i].angle * 180/3.14);
 			renderTexture -> draw(drones[i]);
 		}

@@ -3,7 +3,7 @@
 Drone::Drone(char * path) {
 	texture.loadFromFile(path);
 
-	float scale = 0.01;
+	float scale = 0.1;
 
 	sprite.setTexture(texture);
 	sprite.setScale(scale, scale);
