@@ -4,6 +4,7 @@
 #include <random>
 #include <math.h>
 #include <string.h>
+#include "src/drone.h"
 
 #include "functions/functions.h"
 
@@ -29,114 +30,6 @@ float randFloat() {
 
 }
 
-
-class Drone : public sf::Drawable{
-
-	public:
-		float x = 0;
-		float y = 0;
-
-		float speedx = 0;
-		float speedy = 0;
-
-		float angle = 0;
-		float angular_velocity = 0;
-
-		float inertia = 0.1;
-		float mass = 0.3;
-		float engine_dist = 0.2;
-		float engine_pow = 3;
-
-		void (*controller)(float x, float y, float speedx, float speedy, float angle, float angular_velocity, float * left, float * right) = nullptr;
-
-
-		Drone(char * path = "img/drone.png") {
-			texture.loadFromFile(path);
-
-			float scale = 0.1;
-
-			sprite.setTexture(texture);
-			sprite.setScale(scale, scale);
-			sprite.setOrigin(texture.getSize().x / 2, texture.getSize().y / 2);
-
-			square.setSize(sf::Vector2f(100, 100));
-			square.setScale(scale, scale);
-			square.setOrigin(100 / 2, 100 / 2);
-
-		}
-
-		void physics(float delta, bool debug = false){
-
-
-			//call controller
-			if(controller != nullptr){
-				float cl, cr;
-				controller(x, y, speedx, speedy, angle, angular_velocity, &cl, &cr);
-				setPower(cl, cr);
-			}
-
-			//apply engine power
-			float force = (left_power + right_power)*engine_pow;
-			speedx += force*sin(angle) / mass * delta;
-			speedy += force*cos(angle) / mass * delta;
-
-			angular_velocity += (left_power - right_power)*engine_pow*engine_dist/inertia*delta; //calculate angular acceleration
-
-			//apply physics
-			angle += angular_velocity*delta;
-			speedy += -10*delta;
-
-			x += speedx*delta;
-			y += speedy*delta;
-
-			square.setPosition(x*10 + WIDTH / 2, - y*10 + HEIGHT / 2);
-			square.setRotation(angle * 180 / 3.14);
-
-			sprite.setPosition(x*10 + WIDTH / 2, - y*10 + HEIGHT / 2);
-			sprite.setRotation(angle * 180 / 3.14);
-
-			if(debug){
-				std::cout << "x: " << x << ", y:" << y << ", left_ep: " << left_power << ", right_ep: " << right_power << std::endl;
-			}
-		}
-
-		void setPower(float left, float right){
-
-			if(left > 1)
-				left = 1;
-			if(left < 0)
-				left = 0;
-
-			if(right > 1)
-				right = 1;
-			if(right < 0)
-				right = 0;
-
-			left_power = left;
-			right_power = right;
-		}
-
-		void setColor(int red, int green, int blue){
-			square.setFillColor(sf::Color(red, green, blue));
-		}
-
-
-		virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const {
-
-			target.draw(sprite);
-			target.draw(square);
-		}
-
-	private:
-		sf::Sprite sprite;
-		sf::Texture texture;
-		sf::RectangleShape square;
-
-		float left_power = 0;
-		float right_power = 0;
-};
-
-
 int main(int argc, char* argv[]){
 
 	sf::Text text;
@@ -144,7 +37,7 @@ int main(int argc, char* argv[]){
 	font.loadFromFile("/usr/share/fonts/truetype/freefont/FreeSerif.ttf");
 	text.setFont(font);
 	text.setColor(sf::Color(0, 0, 0));
-	text.move(WIDTH - 100, 10);
+	text.setPosition(WIDTH - 100, 10);
 
 	bool record = false;
 	bool noscreen = false;
@@ -152,7 +45,6 @@ int main(int argc, char* argv[]){
 
 	for(int i = 0; i < argc; i++){
 		if(strcmp(argv[i], "-record") == 0){
-			cout << argv[i] << endl;
 			record = true;
 		}else if(strcmp(argv[i], "-noscreen") == 0){
 			noscreen = true;
@@ -183,15 +75,17 @@ int main(int argc, char* argv[]){
 
 	Drone drone;
 	drone.setColor(120, 120, 120);
+	drone.setScale(10, 10);
 	drone.x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
 	drone.y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
 
 
-	int DRONE_NUMBER = 1000;
+	int DRONE_NUMBER = 5;
 	Drone drones[DRONE_NUMBER];
 
 	for(int i = 0; i < DRONE_NUMBER; i++){
 		Drone * d = new Drone();
+		d -> setScale(10, 10);
 		d -> setColor(i*307 %  255, i*353 % 255, i*397  % 255);
 		d -> x = (float) WIDTH * randFloat() / 10 - WIDTH / 20;
 		d -> y = (float) HEIGHT * randFloat() / 10 - HEIGHT / 20;
@@ -267,17 +161,20 @@ int main(int argc, char* argv[]){
 		renderTexture -> draw(background);
 		renderTexture -> draw(target);
 
+		drone.physics(delta, false);
+		drone.setPosition(WIDTH/2 + drone.x*10, HEIGHT/2 - drone.y*10);
+		drone.setRotation(drone.angle * 180/3.14);
 		renderTexture -> draw(drone);
-		drone.physics(delta);
 
 		for(int i = 0; i < DRONE_NUMBER; i++){
 			drones[i].physics(delta);
+			drones[i].setPosition(WIDTH/2 + drones[i].x*10, HEIGHT/2 - drones[i].y*10);
+			drones[i].setRotation(drones[i].angle * 180/3.14);
 			renderTexture -> draw(drones[i]);
 		}
 
 		if(show_fps){
 			if(frame % 20 == 1){
-				// set the string to display
 				text.setString(to_string((int) (1 / delta)) + " FPS");
 			}
 			renderTexture -> draw(text);
