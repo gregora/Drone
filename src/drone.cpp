@@ -1,6 +1,6 @@
 #include "drone.h"
 
-Drone::Drone(char * path) {
+Drone::Drone(const char * path) {
 	texture.loadFromFile(path);
 
 	float scale = 0.1;
@@ -16,14 +16,6 @@ Drone::Drone(char * path) {
 }
 
 void Drone::physics(float delta, bool debug){
-
-
-	//call controller
-	if(controller != nullptr){
-		float cl, cr;
-		controller(x, y, speedx, speedy, angle, angular_velocity, &cl, &cr);
-		setPower(cl, cr);
-	}
 
 	//apply engine power
 	float force = (left_power + right_power)*engine_pow;

@@ -35,10 +35,15 @@ int main(int argc, char* argv[]){
 
 	sf::Text text;
 	sf::Font font;
-	font.loadFromFile("/usr/share/fonts/truetype/freefont/FreeSerif.ttf");
+	font.loadFromFile("/usr/share/fonts/truetype/tlwg/Garuda.ttf");
 	text.setFont(font);
-	text.setColor(sf::Color(0, 0, 0));
+	text.setFillColor(sf::Color(0, 0, 0));
 	text.setPosition(WIDTH - 100, 10);
+
+	sf::Text ltext;
+	ltext.setFont(font);
+	ltext.setFillColor(sf::Color(255, 255, 255));
+	ltext.setPosition(WIDTH / 2 - 80, HEIGHT / 2 - 100);
 
 	bool record = false;
 	bool noscreen = false;
@@ -71,20 +76,29 @@ int main(int argc, char* argv[]){
 	sf::RenderTexture* renderTexture = new sf::RenderTexture();
 	renderTexture->create(WIDTH, HEIGHT);
 
+	window.clear();
+	ltext.setString("Loading 0%");
+	window.draw(ltext);
+	window.display();
+
 	float time_elapsed = 0;
 	sf::Clock clock;
 
 
 
-	int DRONE_NUMBER = 500;
+	int DRONE_NUMBER = 1000;
 	Drone drones[DRONE_NUMBER];
 	for(int i = 0; i < DRONE_NUMBER; i++){
+		window.clear();
+		ltext.setString("Loading " + to_string(i*100 / DRONE_NUMBER) + "%");
+		window.draw(ltext);
+		window.display();
+
 		Drone * d = new Drone();
 		d -> setScale(SCALE, SCALE);
 		d -> setColor(i*307 %  255, i*353 % 255, i*397  % 255);
 		d -> x = (float) WIDTH * randFloat() / (SCALE*PPM) - WIDTH / (2*SCALE*PPM);
 		d -> y = (float) HEIGHT * randFloat() / (SCALE*PPM) - HEIGHT / (2*SCALE*PPM);
-		d -> controller = &controller2;
 
 		drones[i] = *d;
 	}
@@ -144,19 +158,19 @@ int main(int argc, char* argv[]){
 
 		drones[0].setPower(left, right);
 
-		if(ENABLE_AUTO){
-			if(mode == 0){
-				drones[0].controller = &controller2;
-			}else{
-				drones[0].controller = nullptr;
-			}
-		}
 
 		renderTexture -> clear();
 		renderTexture -> draw(background);
 		renderTexture -> draw(target);
 
 		for(int i = 0; i < DRONE_NUMBER; i++){
+
+			if(i >= 1 || !ENABLE_AUTO || (left ==  0 && right == 0)){
+				float r,l;
+				controller2(drones[i].x, drones[i].y, drones[i].speedx, drones[i].speedy, drones[i].angle, drones[i].angular_velocity, &l, &r);
+				drones[i].setPower(l, r);
+			}
+
 			drones[i].physics(delta);
 			drones[i].setPosition(WIDTH/2 + drones[i].x*SCALE*PPM, HEIGHT/2 - drones[i].y*SCALE*PPM);
 			drones[i].setRotation(drones[i].angle * 180/3.14);
