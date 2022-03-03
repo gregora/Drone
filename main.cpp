@@ -37,8 +37,9 @@ int main(int argc, char* argv[]){
 	sf::Font font;
 	font.loadFromFile("/usr/share/fonts/truetype/tlwg/Garuda.ttf");
 	text.setFont(font);
+	text.setCharacterSize(20);
 	text.setFillColor(sf::Color(0, 0, 0));
-	text.setPosition(WIDTH - 100, 10);
+	text.setPosition(WIDTH - 90, 10);
 
 	sf::Text ltext;
 	ltext.setFont(font);
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]){
 
 
 
-	int DRONE_NUMBER = 1000;
+	int DRONE_NUMBER = 200;
 	Drone drones[DRONE_NUMBER];
 	for(int i = 0; i < DRONE_NUMBER; i++){
 		window.clear();
