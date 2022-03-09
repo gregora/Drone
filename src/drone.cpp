@@ -1,7 +1,9 @@
-#include "drone.h"
+#include "../include/drone.h"
 
-Drone::Drone(const char * path) {
-	texture.loadFromFile(path);
+Drone::Drone(const char * path, float load_texture) {
+	if(load_texture){
+		texture.loadFromFile(path);
+	}
 
 	float scale = 0.1;
 
@@ -55,6 +57,13 @@ void Drone::setPower(float left, float right){
 
 void Drone::setColor(int red, int green, int blue){
 	square.setFillColor(sf::Color(red, green, blue));
+}
+
+void Drone::setOpacity(int value){
+	sprite.setColor(sf::Color(255, 255, 255, value));
+	sf::Color sq = square.getFillColor();
+	sq.a = value;
+	square.setFillColor(sq);
 }
 
 

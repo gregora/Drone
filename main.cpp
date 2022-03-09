@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
 
 
 
-	int DRONE_NUMBER = 1000;
+	int DRONE_NUMBER = 1500;
 	Drone drones[DRONE_NUMBER];
 	for(int i = 0; i < DRONE_NUMBER; i++){
 		window.clear();
